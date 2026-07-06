@@ -42,11 +42,13 @@ class NativeEvent {
 
     if (id is! String || id.isEmpty) {
       throw const NativeEventException(
-          'Native event id must be a non-empty string.');
+        'Native event id must be a non-empty string.',
+      );
     }
     if (name is! String || name.isEmpty) {
       throw const NativeEventException(
-          'Native event name must be a non-empty string.');
+        'Native event name must be a non-empty string.',
+      );
     }
 
     return NativeEvent(
@@ -59,12 +61,12 @@ class NativeEvent {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'name': name,
-        'data': data,
-        'timestamp': timestamp.toIso8601String(),
-        'source': source.name,
-      };
+    'id': id,
+    'name': name,
+    'data': data,
+    'timestamp': timestamp.toIso8601String(),
+    'source': source.name,
+  };
 
   static Map<String, dynamic> _stringMap(Object? value) {
     if (value == null) {
@@ -77,7 +79,8 @@ class NativeEvent {
     return value.map<String, dynamic>((key, value) {
       if (key is! String) {
         throw const NativeEventException(
-            'Native event data keys must be strings.');
+          'Native event data keys must be strings.',
+        );
       }
       return MapEntry<String, dynamic>(key, jsonSafeValue(value));
     });

@@ -35,11 +35,18 @@ class NativeEvents {
 
   static NativeEventConfig get config => _config;
 
-  static Future<void> init(
-      {NativeEventConfig config = const NativeEventConfig()}) async {
+  static Future<void> init({
+    NativeEventConfig config = const NativeEventConfig(),
+  }) async {
     if (config.requestTimeout <= Duration.zero) {
       throw const NativeEventException(
-          'Config requestTimeout must be greater than zero.');
+        'Config requestTimeout must be greater than zero.',
+      );
+    }
+    if (config.nativeEventBufferSize < 0) {
+      throw const NativeEventException(
+        'Config nativeEventBufferSize cannot be negative.',
+      );
     }
 
     if (_initialized) {
@@ -49,14 +56,6 @@ class NativeEvents {
     _config = config;
     _controller = StreamController<NativeEvent>.broadcast();
     _lastEventsByName.clear();
-
-    _nativeSubscription = _eventChannel.receiveBroadcastStream().listen(
-      (rawEvent) {
-        final event = _parseEvent(rawEvent);
-        _recordAndDispatch(event);
-      },
-      onError: _controller?.addError,
-    );
 
     try {
       await _methodChannel.invokeMethod<void>('init', config.toMap());
@@ -68,6 +67,13 @@ class NativeEvents {
         details: error.details,
       );
     }
+
+    _nativeSubscription = _eventChannel.receiveBroadcastStream().listen((
+      rawEvent,
+    ) {
+      final event = _parseEvent(rawEvent);
+      _recordAndDispatch(event);
+    }, onError: _controller?.addError);
 
     _initialized = true;
     _log('initialized');
@@ -112,7 +118,9 @@ class NativeEvents {
             filteredController.add(lastEvent);
           }
         }
-        subscription = all.where((event) => event.name == name).listen(
+        subscription = all
+            .where((event) => event.name == name)
+            .listen(
               filteredController.add,
               onError: filteredController.addError,
               onDone: filteredController.close,
@@ -166,7 +174,8 @@ class NativeEvents {
     final effectiveTimeout = timeout ?? _config.requestTimeout;
     if (effectiveTimeout <= Duration.zero) {
       throw const NativeEventException(
-          'Request timeout must be greater than zero.');
+        'Request timeout must be greater than zero.',
+      );
     }
 
     final request = NativeEventRequest(
@@ -183,11 +192,13 @@ class NativeEvents {
 
       if (rawResponse is! Map) {
         throw const NativeEventException(
-            'Native request response must be a map.');
+          'Native request response must be a map.',
+        );
       }
 
-      final response =
-          NativeEventResponse.fromMap(rawResponse.cast<Object?, Object?>());
+      final response = NativeEventResponse.fromMap(
+        rawResponse.cast<Object?, Object?>(),
+      );
       if (response.requestId != request.requestId) {
         throw NativeEventException(
           'Native response requestId "${response.requestId}" does not match request "${request.requestId}".',
@@ -250,7 +261,8 @@ class NativeEvents {
   static void _validateName(String name) {
     if (name.trim().isEmpty) {
       throw const NativeEventException(
-          'Event name must be a non-empty string.');
+        'Event name must be a non-empty string.',
+      );
     }
   }
 

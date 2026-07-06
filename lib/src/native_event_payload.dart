@@ -1,8 +1,9 @@
 import 'native_event_exception.dart';
 
 Map<String, dynamic> jsonSafePayload(Map<String, dynamic>? data) {
-  final payload =
-      data == null ? <String, dynamic>{} : Map<String, dynamic>.from(data);
+  final payload = data == null
+      ? <String, dynamic>{}
+      : Map<String, dynamic>.from(data);
   validateJsonSafeValue(payload);
   return payload;
 }
@@ -16,7 +17,8 @@ dynamic jsonSafeValue(Object? value) {
     return value.map<String, dynamic>((key, value) {
       if (key is! String) {
         throw const NativeEventPayloadException(
-            'Payload map keys must be strings.');
+          'Payload map keys must be strings.',
+        );
       }
       return MapEntry<String, dynamic>(key, jsonSafeValue(value));
     });
@@ -47,7 +49,8 @@ void validateJsonSafeValue(Object? value, {String path = 'payload'}) {
     for (final entry in value.entries) {
       if (entry.key is! String) {
         throw NativeEventPayloadException(
-            '$path contains a non-string map key.');
+          '$path contains a non-string map key.',
+        );
       }
       validateJsonSafeValue(entry.value, path: '$path.${entry.key}');
     }

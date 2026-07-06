@@ -13,16 +13,22 @@ class NativeEventException implements Exception {
 }
 
 class NativeEventTimeoutException extends NativeEventException {
-  const NativeEventTimeoutException(super.message,
-      {super.code = 'request_timeout', super.details});
+  const NativeEventTimeoutException(
+    super.message, {
+    super.code = 'request_timeout',
+    super.details,
+  });
 
   @override
   String toString() => 'NativeEventTimeoutException ($code): $message';
 }
 
 class NativeEventPayloadException extends NativeEventException {
-  const NativeEventPayloadException(super.message,
-      {super.code = 'invalid_payload', super.details});
+  const NativeEventPayloadException(
+    super.message, {
+    super.code = 'invalid_payload',
+    super.details,
+  });
 
   @override
   String toString() => 'NativeEventPayloadException ($code): $message';

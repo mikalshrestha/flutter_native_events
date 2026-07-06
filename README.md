@@ -32,6 +32,8 @@ await NativeEvents.init(
   config: const NativeEventConfig(
     enableLogging: true,
     replayLastEvent: true,
+    bufferNativeEvents: true,
+    nativeEventBufferSize: 64,
     requestTimeout: Duration(seconds: 30),
   ),
 );
@@ -162,6 +164,39 @@ NativeEventsBridge.shared.onRequest("select_account_error") { request in
 ```
 
 Every request and response contains the same `requestId`. Dart validates the correlation before returning a response.
+
+## Buffered Native Events
+
+Native events sent before Flutter starts listening are buffered by default. This is useful for deep links, push notification taps, payment redirects, auth callbacks, and other native events that can happen before Dart calls `NativeEvents.init()`.
+
+```dart
+await NativeEvents.init(
+  config: const NativeEventConfig(
+    bufferNativeEvents: true,
+    nativeEventBufferSize: 64,
+  ),
+);
+```
+
+Android:
+
+```kotlin
+NativeEventsBridge.sendToFlutter(
+    "deep_link_opened",
+    mapOf("url" to url)
+)
+```
+
+iOS:
+
+```swift
+NativeEventsBridge.shared.sendToFlutter(
+    name: "deep_link_opened",
+    data: ["url": url.absoluteString]
+)
+```
+
+The native bridge keeps the newest buffered events up to `nativeEventBufferSize` and flushes them to Flutter in order when the event stream attaches. Set `bufferNativeEvents` to `false` or `nativeEventBufferSize` to `0` if you prefer to drop events until Flutter is ready.
 
 ## Android Host Integration
 

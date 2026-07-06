@@ -12,16 +12,16 @@ void main() {
     NativeEvents.debugResetForTesting();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockStreamHandler(
-      eventChannel,
-      MockStreamHandler.inline(onListen: (arguments, events) {}),
-    );
+          eventChannel,
+          MockStreamHandler.inline(onListen: (arguments, events) {}),
+        );
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(methodChannel, (MethodCall call) async {
-      if (call.method == 'init' || call.method == 'dispose') {
-        return null;
-      }
-      return null;
-    });
+          if (call.method == 'init' || call.method == 'dispose') {
+            return null;
+          }
+          return null;
+        });
   });
 
   tearDown(() {
@@ -155,17 +155,18 @@ void main() {
   test('request timeout throws NativeEventTimeoutException', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(methodChannel, (MethodCall call) async {
-      if (call.method == 'init' || call.method == 'dispose') {
-        return null;
-      }
-      if (call.method == 'request') {
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-      }
-      return null;
-    });
+          if (call.method == 'init' || call.method == 'dispose') {
+            return null;
+          }
+          if (call.method == 'request') {
+            await Future<void>.delayed(const Duration(milliseconds: 100));
+          }
+          return null;
+        });
     await NativeEvents.init(
-      config:
-          const NativeEventConfig(requestTimeout: Duration(milliseconds: 10)),
+      config: const NativeEventConfig(
+        requestTimeout: Duration(milliseconds: 10),
+      ),
     );
 
     await expectLater(
@@ -178,17 +179,17 @@ void main() {
     String? requestId;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(methodChannel, (MethodCall call) async {
-      if (call.method == 'init' || call.method == 'dispose') {
-        return null;
-      }
-      final arguments = call.arguments as Map<dynamic, dynamic>;
-      requestId = arguments['requestId'] as String;
-      return <String, Object?>{
-        'requestId': requestId,
-        'success': true,
-        'data': <String, Object?>{'accountNumber': '1234567890'},
-      };
-    });
+          if (call.method == 'init' || call.method == 'dispose') {
+            return null;
+          }
+          final arguments = call.arguments as Map<dynamic, dynamic>;
+          requestId = arguments['requestId'] as String;
+          return <String, Object?>{
+            'requestId': requestId,
+            'success': true,
+            'data': <String, Object?>{'accountNumber': '1234567890'},
+          };
+        });
     await NativeEvents.init();
 
     final response = await NativeEvents.request('select_account');
@@ -203,8 +204,21 @@ void main() {
 
     expect(config.enableLogging, false);
     expect(config.replayLastEvent, false);
+    expect(config.bufferNativeEvents, true);
+    expect(config.nativeEventBufferSize, 64);
     expect(config.requestTimeout, const Duration(seconds: 30));
+    expect(config.toMap()['bufferNativeEvents'], true);
+    expect(config.toMap()['nativeEventBufferSize'], 64);
     expect(config.toMap()['requestTimeoutMs'], 30000);
+  });
+
+  test('config rejects negative native event buffer size', () async {
+    await expectLater(
+      NativeEvents.init(
+        config: const NativeEventConfig(nativeEventBufferSize: -1),
+      ),
+      throwsA(isA<NativeEventException>()),
+    );
   });
 
   test('exception messages are meaningful', () {

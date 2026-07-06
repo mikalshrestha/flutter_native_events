@@ -25,7 +25,8 @@ class NativeEventResponse {
 
     if (requestId is! String || requestId.isEmpty) {
       throw const NativeEventException(
-          'Response requestId must be a non-empty string.');
+        'Response requestId must be a non-empty string.',
+      );
     }
     if (success is! bool) {
       throw const NativeEventException('Response success must be a boolean.');
@@ -35,7 +36,8 @@ class NativeEventResponse {
     }
     if (errorMessage != null && errorMessage is! String) {
       throw const NativeEventException(
-          'Response errorMessage must be a string.');
+        'Response errorMessage must be a string.',
+      );
     }
 
     return NativeEventResponse(
@@ -48,12 +50,12 @@ class NativeEventResponse {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'requestId': requestId,
-        'success': success,
-        if (data != null) 'data': data,
-        if (errorCode != null) 'errorCode': errorCode,
-        if (errorMessage != null) 'errorMessage': errorMessage,
-      };
+    'requestId': requestId,
+    'success': success,
+    if (data != null) 'data': data,
+    if (errorCode != null) 'errorCode': errorCode,
+    if (errorMessage != null) 'errorMessage': errorMessage,
+  };
 
   static Map<String, dynamic> _stringMap(Object? value) {
     if (value is! Map) {

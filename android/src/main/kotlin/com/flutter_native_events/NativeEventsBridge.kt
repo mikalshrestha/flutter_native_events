@@ -26,23 +26,38 @@ object NativeEventsBridge {
     private val mainHandler: Handler by lazy { Handler(Looper.getMainLooper()) }
     private var eventSink: EventChannel.EventSink? = null
     private var enableLogging = false
+    private var bufferNativeEvents = true
+    private var nativeEventBufferSize = 64
+    private val pendingFlutterEvents = ArrayDeque<NativeEvent>()
     private val listeners = ConcurrentHashMap<String, MutableList<(NativeEvent) -> Unit>>()
     private val requestHandlers = ConcurrentHashMap<String, (NativeEventRequest) -> Unit>()
     private val pendingResults = ConcurrentHashMap<String, MethodChannel.Result>()
 
     internal fun configure(config: Map<*, *>?) {
         enableLogging = config?.get("enableLogging") as? Boolean ?: false
+        bufferNativeEvents = config?.get("bufferNativeEvents") as? Boolean ?: true
+        nativeEventBufferSize =
+            ((config?.get("nativeEventBufferSize") as? Number)?.toInt() ?: 64).coerceAtLeast(0)
+        if (!bufferNativeEvents || nativeEventBufferSize == 0) {
+            pendingFlutterEvents.clear()
+        } else {
+            trimPendingFlutterEvents()
+        }
     }
 
     internal fun attachSink(sink: EventChannel.EventSink?) {
         mainHandler.post {
             eventSink = sink
+            if (sink != null) {
+                flushPendingFlutterEvents(sink)
+            }
         }
     }
 
     internal fun dispose() {
         attachSink(null)
         pendingResults.clear()
+        pendingFlutterEvents.clear()
     }
 
     @JvmStatic
@@ -63,8 +78,13 @@ object NativeEventsBridge {
     @JvmStatic
     fun sendToFlutter(event: NativeEvent) {
         mainHandler.post {
-            eventSink?.success(event.toMap())
-            log("sent ${event.name}")
+            val sink = eventSink
+            if (sink == null) {
+                bufferEvent(event)
+            } else {
+                sink.success(event.toMap())
+                log("sent ${event.name}")
+            }
         }
     }
 
@@ -193,6 +213,31 @@ object NativeEventsBridge {
         mainHandler.post {
             result.success(response)
             log("replied $requestId")
+        }
+    }
+
+    private fun bufferEvent(event: NativeEvent) {
+        if (!bufferNativeEvents || nativeEventBufferSize <= 0) {
+            log("dropped ${event.name}; no Flutter listener")
+            return
+        }
+
+        pendingFlutterEvents.addLast(event)
+        trimPendingFlutterEvents()
+        log("buffered ${event.name}")
+    }
+
+    private fun flushPendingFlutterEvents(sink: EventChannel.EventSink) {
+        while (pendingFlutterEvents.isNotEmpty()) {
+            val event = pendingFlutterEvents.removeFirst()
+            sink.success(event.toMap())
+            log("flushed ${event.name}")
+        }
+    }
+
+    private fun trimPendingFlutterEvents() {
+        while (pendingFlutterEvents.size > nativeEventBufferSize) {
+            pendingFlutterEvents.removeFirst()
         }
     }
 

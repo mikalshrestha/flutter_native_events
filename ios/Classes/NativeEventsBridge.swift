@@ -36,6 +36,9 @@ public final class NativeEventsBridge {
 
   private var eventSink: FlutterEventSink?
   private var enableLogging = false
+  private var bufferNativeEvents = true
+  private var nativeEventBufferSize = 64
+  private var pendingFlutterEvents: [NativeEvent] = []
   private var listeners: [String: [(NativeEvent) -> Void]] = [:]
   private var requestHandlers: [String: (NativeEventRequest) -> Void] = [:]
   private var pendingResults: [String: FlutterResult] = [:]
@@ -44,17 +47,28 @@ public final class NativeEventsBridge {
 
   func configure(_ config: [String: Any]?) {
     enableLogging = config?["enableLogging"] as? Bool ?? false
+    bufferNativeEvents = config?["bufferNativeEvents"] as? Bool ?? true
+    nativeEventBufferSize = max(config?["nativeEventBufferSize"] as? Int ?? 64, 0)
+    if !bufferNativeEvents || nativeEventBufferSize == 0 {
+      pendingFlutterEvents.removeAll()
+    } else {
+      trimPendingFlutterEvents()
+    }
   }
 
   func attachSink(_ sink: FlutterEventSink?) {
     DispatchQueue.main.async {
       self.eventSink = sink
+      if let sink = sink {
+        self.flushPendingFlutterEvents(to: sink)
+      }
     }
   }
 
   func dispose() {
     attachSink(nil)
     pendingResults.removeAll()
+    pendingFlutterEvents.removeAll()
   }
 
   public func sendToFlutter(name: String, data: [String: Any] = [:]) {
@@ -70,7 +84,12 @@ public final class NativeEventsBridge {
 
   public func sendToFlutter(_ event: NativeEvent) {
     DispatchQueue.main.async {
-      self.eventSink?(self.eventMap(event))
+      guard let eventSink = self.eventSink else {
+        self.bufferEvent(event)
+        return
+      }
+
+      eventSink(self.eventMap(event))
       self.log("sent \(event.name)")
     }
   }
@@ -170,6 +189,32 @@ public final class NativeEventsBridge {
     DispatchQueue.main.async {
       result(response)
       self.log("replied \(requestId)")
+    }
+  }
+
+  private func bufferEvent(_ event: NativeEvent) {
+    guard bufferNativeEvents, nativeEventBufferSize > 0 else {
+      log("dropped \(event.name); no Flutter listener")
+      return
+    }
+
+    pendingFlutterEvents.append(event)
+    trimPendingFlutterEvents()
+    log("buffered \(event.name)")
+  }
+
+  private func flushPendingFlutterEvents(to sink: FlutterEventSink) {
+    pendingFlutterEvents.forEach { event in
+      sink(eventMap(event))
+      log("flushed \(event.name)")
+    }
+    pendingFlutterEvents.removeAll()
+  }
+
+  private func trimPendingFlutterEvents() {
+    let overflowCount = pendingFlutterEvents.count - nativeEventBufferSize
+    if overflowCount > 0 {
+      pendingFlutterEvents.removeFirst(overflowCount)
     }
   }
 

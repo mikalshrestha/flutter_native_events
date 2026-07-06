@@ -22,11 +22,13 @@ class NativeEventRequest {
 
     if (requestId is! String || requestId.isEmpty) {
       throw const NativeEventException(
-          'Request requestId must be a non-empty string.');
+        'Request requestId must be a non-empty string.',
+      );
     }
     if (name is! String || name.isEmpty) {
       throw const NativeEventException(
-          'Request name must be a non-empty string.');
+        'Request name must be a non-empty string.',
+      );
     }
 
     return NativeEventRequest(
@@ -38,11 +40,11 @@ class NativeEventRequest {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'requestId': requestId,
-        'name': name,
-        'data': data,
-        'timestamp': timestamp.toIso8601String(),
-      };
+    'requestId': requestId,
+    'name': name,
+    'data': data,
+    'timestamp': timestamp.toIso8601String(),
+  };
 
   static Map<String, dynamic> _stringMap(Object? value) {
     if (value is! Map) {
@@ -51,7 +53,8 @@ class NativeEventRequest {
     return value.map<String, dynamic>((key, value) {
       if (key is! String) {
         throw const NativeEventPayloadException(
-            'Request data keys must be strings.');
+          'Request data keys must be strings.',
+        );
       }
       return MapEntry<String, dynamic>(key, jsonSafeValue(value));
     });
