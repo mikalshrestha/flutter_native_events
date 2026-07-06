@@ -1,14 +1,10 @@
-## 1.1.0
-
-* Added buffered native events so Android/iOS events sent before Flutter starts listening can be delivered after `NativeEvents.init()`.
-* Added `bufferNativeEvents` and `nativeEventBufferSize` to `NativeEventConfig`.
-* Documented deep link, notification, payment redirect, and auth callback buffering behavior.
-
 ## 1.0.0
 
 * Stable API and pub.dev-ready documentation.
 * Added `NativeEvents.init()` and `NativeEvents.dispose()`.
 * Added `NativeEventConfig` for logging, replay-last-event, and default request timeout.
+* Added buffered native events so Android/iOS events sent before Flutter starts listening can be delivered after `NativeEvents.init()`.
+* Added `bufferNativeEvents` and `nativeEventBufferSize` to `NativeEventConfig`.
 * Added `NativeEventSource` enum and updated `NativeEvent.source`.
 * Added explicit native request handlers with `replySuccess` and `replyError`.
 * Added `NativeEventTimeoutException`, `NativeEventPayloadException`, and `NativeEventNotInitializedException`.
