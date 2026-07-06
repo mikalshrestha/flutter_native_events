@@ -338,13 +338,4 @@ If payload validation fails, remove unsupported values such as `BuildContext`, `
 
 If Flutter does not receive native events, make sure Dart has initialized and subscribed before native sends the event, or enable `replayLastEvent` for the latest event per name.
 
-## Roadmap
-
-* `0.1.0` - Basic emit/on/all.
-* `0.2.0` - Typed event model and payload validation.
-* `0.3.0` - once(), replay, logging config.
-* `0.5.0` - request-response and timeout.
-* `0.8.0` - cleanup, lifecycle handling, tests.
-* `1.0.0` - stable API and pub.dev-ready docs.
-
 See `example/` for a complete Flutter, Android, and iOS sample.
